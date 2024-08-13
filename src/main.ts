@@ -1,3 +1,4 @@
+// Function to handle form submission
 function handleSubmit(event: Event) {
   event.preventDefault();
 
@@ -19,87 +20,164 @@ function handleSubmit(event: Event) {
   const tableBody = document.querySelector(
     "#dataTable tbody"
   ) as HTMLTableSectionElement;
+  const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
+  const isEditMode = submitBtn.textContent === "Update";
+
+  if (isEditMode) {
+    const rowToEdit = document.querySelector(".editing") as HTMLTableRowElement;
+    if (rowToEdit) {
+      updateRow(
+        rowToEdit,
+        firstName,
+        lastName,
+        address,
+        dob,
+        position,
+        jobTitle,
+        salary,
+        married
+      );
+      submitBtn.textContent = "Add";
+      rowToEdit.classList.remove("editing");
+    }
+  } else {
+    addRow(
+      firstName,
+      lastName,
+      address,
+      dob,
+      position,
+      jobTitle,
+      salary,
+      married
+    );
+  }
+
+  saveToLocalStorage();
+  (document.getElementById("addForm") as HTMLFormElement).reset();
+  const modal = document.querySelector("#exampleModal") as HTMLElement;
+  // const bsModal = bootstrap.Modal.getInstance(modal);
+  // bsModal.hide();
+}
+
+// Function to add a new row
+function addRow(
+  firstName: string,
+  lastName: string,
+  address: string,
+  dob: string,
+  position: string,
+  jobTitle: string,
+  salary: string,
+  married: boolean
+) {
+  const tableBody = document.querySelector(
+    "#dataTable tbody"
+  ) as HTMLTableSectionElement;
   const newRow = tableBody.insertRow();
   const rowIndex = tableBody.rows.length;
 
   newRow.innerHTML = `
-          <td>${rowIndex}</td>
-          <td>${firstName}</td>
-          <td>${lastName}</td>
-          <td>${address}</td>
-          <td>${dob}</td>
-          <td>${position}</td>
-          <td>${jobTitle}</td>
-          <td>Job Description</td>
-          <td>${salary}</td>
-          <td>${married ? "Yes" : "No"}</td>
-          <td>
-              <button class="btn btn-info btn-sm edit-btn">Edit</button>
-              <button class="btn btn-danger btn-sm delete-btn">Delete</button>
-          </td>
-      `;
-
-  saveToLocalStorage();
-
-  const modal = document.querySelector("#exampleModal") as HTMLElement;
-  const addForm = document.getElementById("addForm") as HTMLFormElement;
-  addForm.reset();
+        <td>${rowIndex}</td>
+        <td>${firstName}</td>
+        <td>${lastName}</td>
+        <td>${address}</td>
+        <td>${dob}</td>
+        <td>${position}</td>
+        <td>${jobTitle}</td>
+        <td>Job Description</td>
+        <td>${salary}</td>
+        <td>${married ? "Yes" : "No"}</td>
+        <td>
+            <button type="button" class="btn btn-info btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</button>
+            <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+        </td>
+    `;
 }
 
+// Function to update an existing row
+function updateRow(
+  row: HTMLTableRowElement,
+  firstName: string,
+  lastName: string,
+  address: string,
+  dob: string,
+  position: string,
+  jobTitle: string,
+  salary: string,
+  married: boolean
+) {
+  row.innerHTML = `
+        <td>${row.rowIndex}</td>
+        <td>${firstName}</td>
+        <td>${lastName}</td>
+        <td>${address}</td>
+        <td>${dob}</td>
+        <td>${position}</td>
+        <td>${jobTitle}</td>
+        <td>Job Description</td>
+        <td>${salary}</td>
+        <td>${married ? "Yes" : "No"}</td>
+        <td>
+            <button class="btn btn-info btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</button>
+            <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+        </td>
+    `;
+}
+
+// Function to save table data to localStorage
 function saveToLocalStorage() {
-  const tableBody = document.querySelector(
-    "#dataTable tbody"
-  ) as HTMLTableSectionElement;
-  const rows = Array.from(tableBody.rows);
-  const data = rows.map((row) => {
-    const cells = Array.from(row.cells);
+  const rows = document.querySelectorAll("#dataTable tbody tr");
+  const data = Array.from(rows).map((row) => {
+    const cells = row.querySelectorAll("td");
     return {
-      firstName: cells[1].textContent || "",
-      lastName: cells[2].textContent || "",
-      address: cells[3].textContent || "",
-      dob: cells[4].textContent || "",
-      position: cells[5].textContent || "",
-      jobTitle: cells[6].textContent || "",
-      salary: cells[8].textContent || "",
-      married: cells[9].textContent === "Yes",
+      no: cells[0].textContent,
+      firstName: cells[1].textContent,
+      lastName: cells[2].textContent,
+      address: cells[3].textContent,
+      dob: cells[4].textContent,
+      position: cells[5].textContent,
+      jobTitle: cells[6].textContent,
+      jobDescription: cells[7].textContent,
+      salary: cells[8].textContent,
+      married: cells[9].textContent,
     };
   });
+
   localStorage.setItem("tableData", JSON.stringify(data));
 }
 
+// Function to load table data from localStorage
 function loadFromLocalStorage() {
-  const data = localStorage.getItem("tableData");
-  if (data) {
-    const parsedData = JSON.parse(data);
+  const savedData = localStorage.getItem("tableData");
+  if (savedData) {
+    const data = JSON.parse(savedData);
     const tableBody = document.querySelector(
       "#dataTable tbody"
     ) as HTMLTableSectionElement;
-    parsedData.forEach((item: any, index: number) => {
+    data.forEach((item: any, index: number) => {
       const newRow = tableBody.insertRow();
       newRow.innerHTML = `
-              <td>${index + 1}</td>
-              <td>${item.firstName}</td>
-              <td>${item.lastName}</td>
-              <td>${item.address}</td>
-              <td>${item.dob}</td>
-              <td>${item.position}</td>
-              <td>${item.jobTitle}</td>
-              <td>Job Description</td>
-              <td>${item.salary}</td>
-              <td>${item.married ? "Yes" : "No"}</td>
-              <td>
-                  <button  type="button"
-          class="btn btn-primary"
-          data-bs-toggle="modal"
-          data-bs-target="#exampleModal"
-          data-bs-whatever="@mdo">Edit</button>
-                  <button class="btn btn-danger btn-sm delete-btn">Delete</button>
-              </td>
-          `;
+                <td>${index + 1}</td>
+                <td>${item.firstName}</td>
+                <td>${item.lastName}</td>
+                <td>${item.address}</td>
+                <td>${item.dob}</td>
+                <td>${item.position}</td>
+                <td>${item.jobTitle}</td>
+                <td>${item.jobDescription}</td>
+                <td>${item.salary}</td>
+                <td>${item.married}</td>
+                <td>
+                    <button class="btn btn-info btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</button>
+                    <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+                </td>
+            `;
     });
   }
 }
 
+// Function to handle delete button click
 function handleDelete(event: Event) {
   const target = event.target as HTMLButtonElement;
   if (target.classList.contains("delete-btn")) {
@@ -111,6 +189,7 @@ function handleDelete(event: Event) {
   }
 }
 
+// Function to handle edit button click
 function handleEdit(event: Event) {
   const target = event.target as HTMLButtonElement;
   if (target.classList.contains("edit-btn")) {
@@ -137,61 +216,76 @@ function handleEdit(event: Event) {
         "Update";
       (document.getElementById("submitBtn") as HTMLButtonElement).onclick =
         function () {
-          handleUpdate(row);
+          handleSubmit(new Event("submit"));
         };
+      row.classList.add("editing");
     }
   }
 }
 
-function handleUpdate(row: HTMLTableRowElement) {
-  const firstName = (document.getElementById("firstName") as HTMLInputElement)
-    .value;
-  const lastName = (document.getElementById("lastName") as HTMLInputElement)
-    .value;
-  const address = (document.getElementById("address") as HTMLSelectElement)
-    .value;
-  const dob = (document.getElementById("dob") as HTMLInputElement).value;
-  const position = (document.getElementById("position") as HTMLSelectElement)
-    .value;
-  const jobTitle = (document.getElementById("jobTitle") as HTMLSelectElement)
-    .value;
-  const salary = (document.getElementById("salary") as HTMLInputElement).value;
-  const married = (document.getElementById("married") as HTMLInputElement)
-    .checked;
+// Function to handle search input and filtering
+function handleSearch() {
+  const searchFirstNameInput = document.getElementById(
+    "searchFirstName"
+  ) as HTMLInputElement;
+  const searchLastNameInput = document.getElementById(
+    "searchLastName"
+  ) as HTMLInputElement;
+  const selectPosition = document.getElementById(
+    "selectPosition"
+  ) as HTMLSelectElement;
+  const selectAddress = document.getElementById(
+    "selectAddress"
+  ) as HTMLSelectElement;
+  const table = document.getElementById("dataTable") as HTMLTableElement;
+  const tableBody = table.querySelector("tbody") as HTMLTableSectionElement;
+  const rows = Array.from(tableBody.rows);
 
-  row.innerHTML = `
-          <td>${row.rowIndex}</td>
-          <td>${firstName}</td>
-          <td>${lastName}</td>
-          <td>${address}</td>
-          <td>${dob}</td>
-          <td>${position}</td>
-          <td>${jobTitle}</td>
-          <td>Job Description</td>
-          <td>${salary}</td>
-          <td>${married ? "Yes" : "No"}</td>
-          <td>
-              <button class="btn btn-info btn-sm edit-btn">Edit</button>
-              <button class="btn btn-danger btn-sm delete-btn">Delete</button>
-          </td>
-      `;
-  saveToLocalStorage();
-  const addForm = document.getElementById("addForm") as HTMLFormElement;
-  addForm.reset();
+  function filterRows() {
+    const searchFirstName = searchFirstNameInput.value.toLowerCase();
+    const searchLastName = searchLastNameInput.value.toLowerCase();
+    const selectedPosition = selectPosition.value;
+    const selectedAddress = selectAddress.value;
+
+    rows.forEach((row) => {
+      const firstName = row.cells[1].textContent?.toLowerCase() || "";
+      const lastName = row.cells[2].textContent?.toLowerCase() || "";
+      const position = row.cells[5].textContent || "";
+      const address = row.cells[3].textContent || "";
+
+      const matchesFirstName = firstName.includes(searchFirstName);
+      const matchesLastName = lastName.includes(searchLastName);
+      const matchesPosition = selectedPosition
+        ? position === selectedPosition
+        : true;
+      const matchesAddress = selectedAddress
+        ? address === selectedAddress
+        : true;
+
+      row.style.display =
+        matchesFirstName && matchesLastName && matchesPosition && matchesAddress
+          ? ""
+          : "none";
+    });
+  }
+
+  searchFirstNameInput.addEventListener("input", filterRows);
+  searchLastNameInput.addEventListener("input", filterRows);
+  selectPosition.addEventListener("change", filterRows);
+  selectAddress.addEventListener("change", filterRows);
 }
 
-window.addEventListener("load", () => {
+// Initialize functionality
+document.addEventListener("DOMContentLoaded", () => {
+  const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
+  submitBtn.addEventListener("click", handleSubmit);
+
+  const tableBody = document.querySelector(
+    "#dataTable tbody"
+  ) as HTMLTableSectionElement;
+  tableBody.addEventListener("click", handleEdit);
+  tableBody.addEventListener("click", handleDelete);
+
   loadFromLocalStorage();
+  handleSearch();
 });
-
-const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
-submitBtn.addEventListener("click", handleSubmit);
-
-document
-  .querySelector("#dataTable")
-  ?.addEventListener("click", function (event) {
-    if (event.target) {
-      handleDelete(event);
-      handleEdit(event);
-    }
-  });
